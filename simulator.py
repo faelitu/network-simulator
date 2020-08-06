@@ -1,8 +1,9 @@
 import random as rd
 import math
 
+rd.seed()
+
 def aleatorio():
-    rd.seed()
     u = rd.random() # Generate a number between [0.0, 1.0)
     u = 1.0 - u # Returns a number between (0.0, 1.0]
     return u
