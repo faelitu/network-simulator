@@ -81,8 +81,10 @@ while (tempo <= tempo_simulacao):
             saida_atendimento = 0.0
     print("=====================\n")
 
-# Cálculo da Utilização Real
-util = util / tempo_simulacao
+# Cálculo da Utilização
+if (saida_atendimento > tempo):
+    util -= (saida_atendimento - tempo)
+util = util / tempo
 print("Utilização: " + str(util) + "  ~  " + str("{:.2f}".format(util*100)) + "%\n")
 
 #valor = float((-1.0/l) * math.log(aleatorio()))
