@@ -74,10 +74,6 @@ while (tempo <= tempo_simulacao):
         fila += 1.0
         print("Fila: " + str(fila))
 
-        # Cálculo de E[N]
-        numEventosEN += 1.0
-        somaAreasEN += numEventosEN * (tempo - tempoAnteriorEN)
-        tempoAnteriorEN = tempo
         # Cálculo de E[W]
         numEventosEWa += 1.0
         somaAreasEWa += numEventosEWa * (tempo - tempoAnteriorEWa)
@@ -91,8 +87,16 @@ while (tempo <= tempo_simulacao):
         
         # Gerar o tempo de chegada do próximo cliente
         chegada_cliente = tempo + float((-1.0/tempo_medio_clientes) * math.log(aleatorio()))
+
+        # Cálculo de E[N]
+        somaAreasEN += numEventosEN * (tempo - tempoAnteriorEN)
+        tempoAnteriorEN = tempo
+        numEventosEN += 1.0
     else:
-        # Evento de saída de cliente
+        # Evento executado se houver saída de cliente
+        # ou ainda se houver chegada de cliente, mas
+        # o caixa estiver ocioso.
+        # 
         # A cabeça da fila não consiste no cliente em atendimento.
         # O cliente que começa a ser atendido portanto, sai da fila,
         # e passa a estar ainda no comércio, mas em atendimento no caixa.
@@ -103,10 +107,6 @@ while (tempo <= tempo_simulacao):
             fila -= 1.0
             print("Fila: " + str(fila))
 
-            # Cálculo de E[N]
-            numEventosEN -= 1.0
-            somaAreasEN += numEventosEN * (tempo - tempoAnteriorEN)
-            tempoAnteriorEN = tempo
             # Cálculo de E[W]
             if (numEventosEWb > 0.0):
                 somaAreasEWb += numEventosEWb * (tempo - tempoAnteriorEWb)
@@ -122,21 +122,31 @@ while (tempo <= tempo_simulacao):
             print("Utilização Total: " + str(util))
         else:
             saida_atendimento = 0.0
+        
+        # Cálculo de E[N]
+        if (tempoAnteriorEN < tempo): # Se saiu alguém de fato (não quando chega alguém com o caixa ocioso)
+            somaAreasEN += numEventosEN * (tempo - tempoAnteriorEN)
+            tempoAnteriorEN = tempo
+            numEventosEN -= 1.0
     print("=====================\n")
 
 # Cálculo da Utilização
 if (saida_atendimento > tempo):
     util -= (saida_atendimento - tempo)
-    somaAreasEN -= (saida_atendimento - tempo) * numEventosEN
 
 util = util / tempo
-print("Utilização: " + str(util) + "  ~  " + str("{:.2f}".format(util*100)))
+print("Utilização: " + str(util) + "  ~  " + str("{:.2f}".format(util*100)) + "%")
+
+# Tamanho médio de (fila + atendimento).
 en = somaAreasEN / tempo
 print("E[N]: " + str(en))
+
 ew = (somaAreasEWa - somaAreasEWb) / numEventosEWa
 print("E[W]: " + str(ew))
+
 lamb = numEventosEWa / tempo
 print("Lambda: " + str(lamb))
+
 print("")
 
 # E[W] ainda está bugado
