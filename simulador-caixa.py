@@ -37,6 +37,19 @@ fila = 0.0
 # Armazena a Utilização
 util = 0.0
 
+# Armazena o número de eventos para o cálculo de E[N] e E[W]
+numEventosEN = 0.0
+numEventosEWa = 0.0
+numEventosEWb = 0.0
+# Armazena a área no gráfico para o cálculo de E[N] e E[W]
+somaAreasEN = 0.0
+somaAreasEWa = 0.0
+somaAreasEWb = 0.0
+# Armazena o tempo anterior para o cálculo de E[N] e E[W]
+tempoAnteriorEN = 0.0
+tempoAnteriorEWa = 0.0
+tempoAnteriorEWb = 0.0
+
 # Lógica da simulação
 while (tempo <= tempo_simulacao):
     # Não existe cliente sendo atendido no momento atual,
@@ -44,14 +57,32 @@ while (tempo <= tempo_simulacao):
     # a chegada do próximo cliente
     if (saida_atendimento == 0.0):
         tempo = chegada_cliente
+
+        # Evento de chegada de cliente em tempo ocioso
+        #numEventosEN += 1.0
+        #numEventosEW += 1.0
+        tempoAnteriorEN = tempo
+        tempoAnteriorEWa = tempo
     else:
         tempo = min(chegada_cliente, saida_atendimento)
+            
     
     if (tempo == chegada_cliente):
         print("Chegada de cliente: " + str(chegada_cliente))
+
         # Evento de chegada de cliente
         fila += 1.0
         print("Fila: " + str(fila))
+
+        # Cálculo de E[N]
+        numEventosEN += 1.0
+        somaAreasEN += numEventosEN * (tempo - tempoAnteriorEN)
+        tempoAnteriorEN = tempo
+        # Cálculo de E[W]
+        numEventosEWa += 1.0
+        somaAreasEWa += numEventosEWa * (tempo - tempoAnteriorEWa)
+        tempoAnteriorEWa = tempo
+
         # Indica que o caixa está ocioso
         # logo, pode-se começar a atender
         # o cliente que acaba de chegar
@@ -68,8 +99,20 @@ while (tempo <= tempo_simulacao):
 
         # Verifico se há cliente na fila
         if (fila > 0.0):
+            # Evento de saída de cliente
             fila -= 1.0
             print("Fila: " + str(fila))
+
+            # Cálculo de E[N]
+            numEventosEN -= 1.0
+            somaAreasEN += numEventosEN * (tempo - tempoAnteriorEN)
+            tempoAnteriorEN = tempo
+            # Cálculo de E[W]
+            if (numEventosEWb > 0.0):
+                somaAreasEWb += numEventosEWb * (tempo - tempoAnteriorEWb)
+            numEventosEWb += 1.0
+            tempoAnteriorEWb = tempo
+
             saida_atendimento = tempo + float((-1.0/tempo_medio_atendimento) * math.log(aleatorio()))
             print("Saida de cliente: " + str(saida_atendimento))
 
@@ -84,7 +127,16 @@ while (tempo <= tempo_simulacao):
 # Cálculo da Utilização
 if (saida_atendimento > tempo):
     util -= (saida_atendimento - tempo)
-util = util / tempo
-print("Utilização: " + str(util) + "  ~  " + str("{:.2f}".format(util*100)) + "%\n")
+    somaAreasEN -= (saida_atendimento - tempo) * numEventosEN
 
-#valor = float((-1.0/l) * math.log(aleatorio()))
+util = util / tempo
+print("Utilização: " + str(util) + "  ~  " + str("{:.2f}".format(util*100)))
+en = somaAreasEN / tempo
+print("E[N]: " + str(en))
+ew = (somaAreasEWa - somaAreasEWb) / numEventosEWa
+print("E[W]: " + str(ew))
+lamb = numEventosEWa / tempo
+print("Lambda: " + str(lamb))
+print("")
+
+# E[W] ainda está bugado
