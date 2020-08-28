@@ -57,12 +57,6 @@ while (tempo <= tempo_simulacao):
     # a chegada do próximo cliente
     if (saida_atendimento == 0.0):
         tempo = chegada_cliente
-
-        # Evento de chegada de cliente em tempo ocioso
-        #numEventosEN += 1.0
-        #numEventosEW += 1.0
-        tempoAnteriorEN = tempo
-        tempoAnteriorEWa = tempo
     else:
         tempo = min(chegada_cliente, saida_atendimento)
             
@@ -73,11 +67,6 @@ while (tempo <= tempo_simulacao):
         # Evento de chegada de cliente
         fila += 1.0
         print("Fila: " + str(fila))
-
-        # Cálculo de E[W]
-        numEventosEWa += 1.0
-        somaAreasEWa += numEventosEWa * (tempo - tempoAnteriorEWa)
-        tempoAnteriorEWa = tempo
 
         # Indica que o caixa está ocioso
         # logo, pode-se começar a atender
@@ -92,6 +81,11 @@ while (tempo <= tempo_simulacao):
         somaAreasEN += numEventosEN * (tempo - tempoAnteriorEN)
         tempoAnteriorEN = tempo
         numEventosEN += 1.0
+
+        # Cálculo de E[W]
+        somaAreasEWa += numEventosEWa * (tempo - tempoAnteriorEWa)
+        tempoAnteriorEWa = tempo
+        numEventosEWa += 1.0
     else:
         # Evento executado se houver saída de cliente
         # ou ainda se houver chegada de cliente, mas
@@ -107,12 +101,6 @@ while (tempo <= tempo_simulacao):
             fila -= 1.0
             print("Fila: " + str(fila))
 
-            # Cálculo de E[W]
-            if (numEventosEWb > 0.0):
-                somaAreasEWb += numEventosEWb * (tempo - tempoAnteriorEWb)
-            numEventosEWb += 1.0
-            tempoAnteriorEWb = tempo
-
             saida_atendimento = tempo + float((-1.0/tempo_medio_atendimento) * math.log(aleatorio()))
             print("Saida de cliente: " + str(saida_atendimento))
 
@@ -122,12 +110,18 @@ while (tempo <= tempo_simulacao):
             print("Utilização Total: " + str(util))
         else:
             saida_atendimento = 0.0
-        
-        # Cálculo de E[N]
-        if (tempoAnteriorEN < tempo): # Se saiu alguém de fato (não quando chega alguém com o caixa ocioso)
+
+        # Se saiu alguém de fato (não quando chega alguém com o caixa ocioso)
+        if (tempoAnteriorEN < tempo):
+            # Cálculo de E[N]
             somaAreasEN += numEventosEN * (tempo - tempoAnteriorEN)
             tempoAnteriorEN = tempo
             numEventosEN -= 1.0
+
+            # Cálculo de E[W]
+            somaAreasEWb += numEventosEWb * (tempo - tempoAnteriorEWb)
+            tempoAnteriorEWb = tempo
+            numEventosEWb += 1.0
     print("=====================\n")
 
 # Cálculo da Utilização
@@ -141,11 +135,19 @@ print("Utilização: " + str(util) + "  ~  " + str("{:.2f}".format(util*100)) + 
 en = somaAreasEN / tempo
 print("E[N]: " + str(en))
 
+# Tempo médio que cada cliente ficou dentro da loja (fila + atendimento)
+somaAreasEWa += numEventosEWa * (tempo - tempoAnteriorEWa)
+somaAreasEWb += numEventosEWb * (tempo - tempoAnteriorEWb)
 ew = (somaAreasEWa - somaAreasEWb) / numEventosEWa
 print("E[W]: " + str(ew))
 
+# Taxa de chegada
 lamb = numEventosEWa / tempo
 print("Lambda: " + str(lamb))
+
+# Validação de Little
+little = en - lamb * ew
+print("Validação de Little: " + str(little))
 
 print("")
 
